@@ -22,7 +22,6 @@ jiwer = ">=3.0.4"
 transformers = ">=4.44.2"
 datasets = ">=3.0.0"
 accelerate = ">=1.6.0"
-llvmlite = ">=0.43.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=8.3.0"
