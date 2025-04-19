@@ -223,9 +223,9 @@ class Decoder():
             
             result.append({
                 "transcription": transcription,
-                "start_timestamps": transcription_start_timestamps if len(transcription_start_timestamps) > 0 else None,
-                "end_timestamps": transcription_end_timestamps if len(transcription_end_timestamps) > 0 else None,
-                "probabilities": transcription_probabilities if len(transcription_probabilities) > 0 else None,
+                # "start_timestamps": transcription_start_timestamps if len(transcription_start_timestamps) > 0 else None,
+                # "end_timestamps": transcription_end_timestamps if len(transcription_end_timestamps) > 0 else None,
+                # "probabilities": transcription_probabilities if len(transcription_probabilities) > 0 else None,
             })
         
         return result
