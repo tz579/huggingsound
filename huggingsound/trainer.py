@@ -413,7 +413,7 @@ class CTCTrainer(Trainer):
         self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, _lr_lambda)
 
 
-    def training_step(self, model: torch.nn.Module, inputs: dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
+    def training_step(self, model: torch.nn.Module, inputs: dict[str, Union[torch.Tensor, Any]], num_items: Optional[int] = None) -> torch.Tensor:
         """
         Perform a training step on a batch of inputs.
 
@@ -465,6 +465,27 @@ class CTCTrainer(Trainer):
 
         return loss.detach()
 
+    def get_eval_dataloader(self, eval_dataset: Optional[Dataset] = None):
+        """
+        Override to disable group_by_length during evaluation to prevent input_ids-related crashes
+        when using raw audio (input_values only).
+        """
+        original_group_by_length = self.args.group_by_length
+        self.args.group_by_length = False
+        dataloader = super().get_eval_dataloader(eval_dataset)
+        self.args.group_by_length = original_group_by_length
+        return dataloader
+
+    def get_test_dataloader(self, test_dataset: Dataset):
+        """
+        Optional: same as get_eval_dataloader, for completeness in test phase.
+        """
+        original_group_by_length = self.args.group_by_length
+        self.args.group_by_length = False
+        dataloader = super().get_test_dataloader(test_dataset)
+        self.args.group_by_length = original_group_by_length
+        return dataloader
+
 
 def finetune_ctc(model_name_or_path: str, output_dir: str, processor: Wav2Vec2Processor, train_dataset: Dataset, 
                  eval_dataset: Optional[Dataset] = None, device: Optional[str] = "cpu", 
@@ -511,12 +532,12 @@ def finetune_ctc(model_name_or_path: str, output_dir: str, processor: Wav2Vec2Pr
     training_args_dict = asdict(training_args)
     training_args_dict["output_dir"] = output_dir
     training_args_dict["device"] = device
-    training_args_dict["no_cuda"] = device == "cpu"
+    training_args_dict["use_cpu"] = device == "cpu"
     training_args_dict["do_train"] = True
 
     if eval_dataset is not None:
         training_args_dict["do_eval"] = True
-        training_args_dict["evaluation_strategy"] = "steps"
+        training_args_dict["eval_strategy"] = "steps"
         training_args_dict["greater_is_better"] = False
     
     hftraining_args = hf_arg_parser.parse_dict(training_args_dict, allow_extra_keys=True)[0]
