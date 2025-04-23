@@ -538,6 +538,7 @@ def finetune_ctc(model_name_or_path: str, output_dir: str, processor: Wav2Vec2Pr
     if eval_dataset is not None:
         training_args_dict["do_eval"] = True
         training_args_dict["eval_strategy"] = "steps"
+        training_args_dict["evaluation_strategy"] = "steps"
         training_args_dict["greater_is_better"] = False
     
     hftraining_args = hf_arg_parser.parse_dict(training_args_dict, allow_extra_keys=True)[0]
