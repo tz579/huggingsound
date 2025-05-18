@@ -432,38 +432,13 @@ class CTCTrainer(Trainer):
             :obj:`torch.Tensor`: The tensor with training loss on this batch.
         """
 
-        model.train()
-        inputs = self._prepare_inputs(inputs)
-
-        if (hasattr(self, 'use_amp') and self.use_amp) or (hasattr(self, 'use_cuda_amp') and self.use_cuda_amp):
-            with torch.cuda.amp.autocast():
-                loss = self.compute_loss(model, inputs)
-        else:
-            loss = self.compute_loss(model, inputs)
-
-        if self.args.n_gpu > 1:
-            if model.module.config.ctc_loss_reduction == "mean":
-                loss = loss.mean()
-            elif model.module.config.ctc_loss_reduction == "sum":
-                loss = loss.sum() / (inputs["labels"] >= 0).sum()
-            else:
-                raise ValueError(f"{model.config.ctc_loss_reduction} is not valid. Choose one of ['mean', 'sum']")
-
-        if self.args.gradient_accumulation_steps > 1:
-            loss = loss / self.args.gradient_accumulation_steps
-
-        if (hasattr(self, 'use_amp') and self.use_amp) or (hasattr(self, 'use_cuda_amp') and self.use_cuda_amp):
-            self.scaler.scale(loss).backward()
-        elif self.deepspeed:
-            self.deepspeed.backward(loss)
-        else:
-            loss.backward()
+        loss = super().training_step(model, inputs, num_items)
 
         if self.training_step_callbacks is not None:
             for callback in self.training_step_callbacks:
                 callback(self, float(loss.detach()))
 
-        return loss.detach()
+        return loss
 
     def get_eval_dataloader(self, eval_dataset: Optional[Dataset] = None):
         """
